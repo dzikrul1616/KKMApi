@@ -14,6 +14,8 @@ use App\Models\Obat;
 use App\Models\Branch;
 use DB;
 use Carbon\Carbon;
+use Twilio\Rest\Client;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -32,42 +34,32 @@ class AuthController extends Controller
     }
     public function auth(Request $request)
     {
-        $email = $request->input('email');
-        $password = $request->input('password');
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'required',
+            'otp_number' => 'required',
+        ]);
 
-        $credentials = [
-            'email' => $email,
-            'password' => $password,
-        ];
-
-        if (Auth::attempt($credentials)) {
-            // Jika autentikasi berhasil, kirim respon dengan status 200 OK
-             $user = Auth::user();
-             $token = $user->createToken('token')->plainTextToken;
-             return response()->json([
-                'status' => 'success',
-                'message' => 'Login berhasil',
-                'user' => $user,
-                'token' => $token
-            ], 200);
-          } else {
-              // Jika autentikasi gagal, coba lagi dengan mengubah password menjadi terbcrypt
-              $user = User::where('email', $email)->first();
-              if ($user && \Hash::check($password, $user->password)) {
-                  Auth::login($user);
-                  return response()->json([
-                   'status' => 'success',
-                   'message' => 'Login berhasil',
-                   'user' => $user,
-                   'token' => $token
-                  ], 200);
-              } else {
-                  // Jika autentikasi gagal lagi, kirim respon dengan status 401 Unauthorized
-                  return response()->json([
-                      'message' => 'email atau password salah'
-                  ], 401);
-            }
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
         }
+
+        $user = User::where('phone_number', $request->phone_number)
+            ->where('otp_number', $request->otp_number)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor telepon atau OTP salah',
+            ], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+        ]);
     }
 
     public function register(Request $request)
@@ -110,5 +102,79 @@ class AuthController extends Controller
             'data' => $user,
             'message' => 'Pendaftaran berhasil'
         ], 201);
+    }
+
+    public function sendOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+
+        $user = User::where('phone_number', $request->phone_number)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor telepon tidak terdaftar',
+            ], 404);
+        }
+
+        $otp = mt_rand(100000, 999999);
+
+        // $twilio = new Client(env('TWILIO_ACCOUNT_SID'), env('TWILIO_AUTH_TOKEN'));
+        // $message = $twilio->messages->create(
+        //     $request->phone_number,
+        //     array(
+        //         'from' => env('TWILIO_FROM_NUMBER'),
+        //         'body' => 'Kode OTP Anda adalah ' . $otp
+        //     )
+        // );
+
+        $user->update([
+            'otp_number' => $otp,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP berhasil dikirim',
+            'otp' => $otp,
+        ]);
+    }
+
+    public function verifyOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'required',
+            'otp_number' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor telepon dan OTP tidak boleh kosong',
+            ], 400);
+        }
+
+        $user = User::where('phone_number', $request->phone_number)
+            ->where('otp_number', $request->otp_code)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OTP salah',
+            ], 401);
+        }
+
+        $token = $user->createToken('token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+        ]);
     }
 }

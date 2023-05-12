@@ -26,6 +26,7 @@ class ObatController extends Controller
             'type' => 'required',
             'lenght' => 'required',
             'golongan' => 'required',
+            'dosis' => 'required',
             'efek_samping' => 'required',
             'kategori_obat' => 'required',
             'harga_obat' => 'required',
@@ -37,6 +38,7 @@ class ObatController extends Controller
             'type.required' => 'Type Wajib Diisi',
             'lenght.required' => 'Lenght Wajib Diisi',
             'golongan.required' => 'golongan Wajib Diisi',
+            'dosis.required' => 'dosis Wajib Diisi',
             'efek_samping.required' => 'efek_samping Wajib Diisi',
             'kategori_obat.required' => 'kategori Obat Wajib Diisi',
             'harga_obat.required' => 'Harga Obat Wajib Diisi',
@@ -55,6 +57,7 @@ class ObatController extends Controller
         $obat->type = $validateData['type'];
         $obat->lenght = $validateData['lenght'];
         $obat->golongan = $validateData['golongan'];
+        $obat->dosis = $validateData['dosis'];
         $obat->efek_samping = $validateData['efek_samping'];
         $obat->kategori_obat = $validateData['kategori_obat'];
         $obat->harga_obat = $validateData['harga_obat'];

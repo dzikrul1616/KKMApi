@@ -19,4 +19,15 @@ class PesakitController extends Controller
         ];
         return response()->json($result, 200);
     }
+    public function getPesakitId($branch_id)
+    {
+        $pesakit = Pesakit::where('branch_id', $branch_id)
+                          ->get();
+        $result = [
+            'success' => true,
+            'data' => $pesakit,
+            'message' => 'Data Pesakit'
+        ];
+        return response()->json($result, 200);
+    }
 }

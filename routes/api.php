@@ -13,18 +13,21 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::controller(AuthController::class)->group(function () {
     Route::get('auth', 'index');
     Route::post('login', 'auth');
     Route::post('register', 'register');
+    Route::post('send-otp', 'sendOTP');
+    Route::post('verify-otp', 'verifyOTP');
 });
 Route::controller(PesakitController::class)->group(function () {
     Route::get('pesakit', 'index');
+    Route::get('pesakit/{branch_id}', 'getPesakitId');
 });
 Route::controller(BranchController::class)->group(function () {
     Route::get('branch', 'index');
     Route::get('branch/{user_id}', 'getBranchId');
+    Route::post('branch', 'addBranch');
 });
 Route::controller(PesakitObatController::class)->group(function () {
     Route::get('pesakitobat', 'index');
