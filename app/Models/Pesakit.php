@@ -10,9 +10,9 @@ class Pesakit extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'branch_id',
         'nama',
         'tanggal_lahir',
-        'umur',
         'diagnosis', 
         'jenis_kelamin', 
         'height', 

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Hash;
 use Validator;
 use App\Models\Pesakit;
@@ -34,51 +34,37 @@ class AuthController extends Controller
     }
     public function auth(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone_number' => 'required',
-            'otp_number' => 'required',
-        ]);
+         $phone = $request->input('phone_number');
+         $password = $request->input('password');
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        $user = User::where('phone_number', $request->phone_number)
-            ->where('otp_number', $request->otp_number)
-            ->first();
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nomor telepon atau OTP salah',
+         $credentials = [
+             'phone_number' => $phone,
+             'password' => $password,
+         ];
+         if (Auth::attempt($credentials)) {
+             // Jika autentikasi berhasil, kirim respon dengan status 200 OK
+              $user = Auth::user();
+              $token = $user->createToken('token')->plainTextToken;
+              return response()->json([
+                 'status' => 'success',
+                 'message' => 'Login berhasil',
+                 'user' => $user,
+                 'token' => $token
+             ], 200);
+           } else {
+                   // Jika autentikasi gagal lagi, kirim respon dengan status 401 Unauthorized
+                return response()->json([
+                    'message' => 'Phone atau password salah'
             ], 401);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'token' => $token,
-        ]);
+         }
     }
 
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:5',
-            'specialist' => 'required|string',
-            'hospital' => 'required|string',
+            'phone_number' => 'required',
         ], [
-            'name.required' => 'Form nama lengkap wajib diisi !',
-            'email.unique' => 'Email telah terdaftar, gunakan email lainnya',
-            'email.required' => 'Form email wajib diisi !',
-            'email.email' => 'Format email salah',
-            'password.min' => 'Password minimal 5 karakter',
-            'password.required' => 'Form Password wajib diisi !',
-            'specialist.required' => 'Form Specialist hp wajib diisi !',
-            'hospital.required' => 'Form hospital hp wajib diisi !',
+            'phone_number.required' => 'Form nomor telepon wajib diisi !'
         ]);
     
         if ($validator->fails()) {
@@ -88,13 +74,8 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-    
         $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->specialist = $request->specialist;
-        $user->hospital = $request->hospital;
-        $user->password = bcrypt($request->password);
+        $user->phone_number = $request->phone_number;
         $user->save();
     
         return response()->json([
@@ -123,58 +104,26 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $otp = mt_rand(100000, 999999);
-
+        
         // $twilio = new Client(env('TWILIO_ACCOUNT_SID'), env('TWILIO_AUTH_TOKEN'));
         // $message = $twilio->messages->create(
-        //     $request->phone_number,
-        //     array(
-        //         'from' => env('TWILIO_FROM_NUMBER'),
-        //         'body' => 'Kode OTP Anda adalah ' . $otp
-        //     )
-        // );
-
+            //     $request->phone_number,
+            //     array(
+                //         'from' => env('TWILIO_FROM_NUMBER'),
+                //         'body' => 'Kode OTP Anda adalah ' . $otp
+                //     )
+                // );
+                
+        $password = mt_rand(100000, 999999);
         $user->update([
-            'otp_number' => $otp,
+            'password' => Hash::make($password),
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'OTP berhasil dikirim',
-            'otp' => $otp,
-        ]);
-    }
-
-    public function verifyOTP(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'phone_number' => 'required',
-            'otp_number' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nomor telepon dan OTP tidak boleh kosong',
-            ], 400);
-        }
-
-        $user = User::where('phone_number', $request->phone_number)
-            ->where('otp_number', $request->otp_code)
-            ->first();
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'OTP salah',
-            ], 401);
-        }
-
-        $token = $user->createToken('token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'token' => $token,
+            'phone' => $request->phone_number,
+            'otp' => $password,
         ]);
     }
 }

@@ -17,10 +17,12 @@ return new class extends Migration
             $table->string('phone_number')->nullable()->unique();
             $table->string('otp_number')->nullable();
             $table->string('email')->nullable()->unique();
-            $table->string('specialist');
-            $table->string('hospital');
+            $table->string('profil')->nullable();
+            $table->string('gender')->nullable();
+            $table->string('specialist')->nullable();
+            $table->string('hospital')->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
