@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Pesakit;
+use app\Models\User;
 use DB;
 use Auth;
-use app\Models\User;
 
 class BranchController extends Controller
 {

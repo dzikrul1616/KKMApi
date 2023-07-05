@@ -2,11 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PesakitController;
 use App\Http\Controllers\ObatController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PesakitObatController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckController;
 use App\Http\Controllers\RumahSakitController;
 use App\Http\Controllers\SpecialistController;
@@ -16,18 +16,19 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::controller(AuthController::class)->group(function () {
+    Route::get('auth', 'index');
+    Route::post('send-notification', 'sendNotification');
+    Route::post('login', 'auth');
+    Route::post('register', 'register');
+    Route::post('send-otp', 'sendOTP');
+    Route::post('verify-otp', 'verifyOTP');
+});
 Route::controller(RumahSakitController::class)->group(function () {
     Route::get('rumah-sakit', 'index');
 });
 Route::controller(SpecialistController::class)->group(function () {
     Route::get('specialist', 'index');
-});
-Route::controller(AuthController::class)->group(function () {
-    Route::get('auth', 'index');
-    Route::post('login', 'auth');
-    Route::post('register', 'register');
-    Route::post('send-otp', 'sendOTP');
-    Route::post('verify-otp', 'verifyOTP');
 });
 Route::controller(CheckController::class)->group(function () {
     Route::get('check', 'checkAuthStatus');
@@ -52,4 +53,5 @@ Route::controller(PesakitObatController::class)->group(function () {
 Route::controller(ObatController::class)->group(function () {
     Route::get('obat', 'index');
     Route::post('obat', 'addObat');
+    Route::delete('obat/{id}', 'deleteObat');
 });
